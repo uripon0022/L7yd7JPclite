@@ -27,7 +27,7 @@
         body { font-family: 'M PLUS Rounded 1c', sans-serif; }
         
         #editor { 
-            height: 55vh; 
+            height: 50vh; /* 広告が入る分、少しだけ高さを調整 */
             font-family: 'M PLUS Rounded 1c', sans-serif;
             font-size: 16px;
         }
@@ -56,22 +56,6 @@
             background-color: var(--theme-soft);
             border-left-color: var(--theme-main);
             font-weight: bold;
-        }
-        
-        /* リスト内の削除ボタン */
-        .list-delete-btn {
-            background-color: #fff;
-            border: 1px solid #e5e7eb;
-            color: #9ca3af;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            transition: all 0.2s;
-        }
-        .list-delete-btn:hover { 
-            background-color: #fee2e2;
-            border-color: #fca5a5;
-            color: #ef4444;
         }
         
         /* トースト通知 */
@@ -168,6 +152,23 @@
 
         <main class="flex-1 p-8 overflow-y-auto flex flex-col gap-4 bg-[var(--theme-soft)] transition-colors duration-300" id="main-area">
             
+            <div class="bg-white/80 border-l-4 border-pink-400 p-4 rounded-r shadow-sm text-sm mb-2">
+                <div class="flex items-start gap-3">
+                    <div class="text-2xl mt-0.5">🎁</div>
+                    <div>
+                        <p class="text-gray-700 leading-relaxed font-medium mb-2">
+                            本エディタの完全版は、メルマガスタンド「7th-Mail」一般販売開始時に<span class="text-pink-500 font-bold">うりぽん特典</span>として配布予定です。<br>
+                            販売時期のお知らせはレビューページまたはうりぽんメルマガにてご案内します。
+                        </p>
+                        <div class="bg-pink-50/50 rounded-lg p-2 inline-block">
+                            <span class="font-bold text-gray-500 text-xs">レビューページはこちら</span>
+                            <a href="https://uri-enjoylife.com/7thmail" target="_blank" class="block text-pink-500 font-bold hover:underline hover:text-pink-600 text-base flex items-center gap-1">
+                                ＞＞ https://uri-enjoylife.com/7thmail <span class="text-xs">↗</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div id="mode-indicator" class="hidden text-center py-2 rounded-lg font-bold text-white mb-2 shadow-sm"></div>
 
             <div id="selector-wrapper" class="flex gap-4 p-4 bg-white rounded-2xl shadow-sm border border-[var(--theme-border)]">
@@ -228,8 +229,8 @@
                 <button id="btn-copy" onclick="copyHtml()" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-8 rounded-full shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2 h-full">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
                     <div class="text-left leading-tight">
-                        <div class="text-xs font-normal opacity-90">HTML</div>
-                        <div class="text-base font-bold">コピー</div>
+                        <div class="text-xs font-normal opacity-90">ヘッダーフッター付き</div>
+                        <div class="text-base font-bold">HTMLコピー</div>
                     </div>
                 </button>
             </div>
@@ -252,7 +253,7 @@
             root.style.setProperty('--theme-soft', t.soft);
             root.style.setProperty('--theme-border', t.border);
             root.style.setProperty('--theme-hover', t.hover);
-            localStorage.setItem('editor-theme-lite', name); // キー名を変更してLite版設定として保存
+            localStorage.setItem('editor-theme-lite', name); 
         }
 
         const savedTheme = localStorage.getItem('editor-theme-lite') || 'pink';
@@ -366,9 +367,8 @@
             }
         }
 
-        // --- 7. リスト描画（検索機能を削除） ---
+        // --- 7. リスト描画 ---
         async function loadDraftList() {
-            // 検索ロジック削除。全件取得のみ。
             let drafts = await db.drafts.orderBy('sortDate').reverse().toArray();
             
             const listEl = document.getElementById('list-container');
@@ -699,8 +699,6 @@
                 showToast('❌ コピー失敗');
             }
         }
-
-        // zipダウンロード、データ移行(Import/Export) 関数は削除
 
         const triggerSave = () => {
             clearTimeout(autoSaveTimer);

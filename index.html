@@ -27,7 +27,7 @@
         body { font-family: 'M PLUS Rounded 1c', sans-serif; }
         
         #editor { 
-            height: 50vh; /* 広告が入る分、少しだけ高さを調整 */
+            height: 50vh; 
             font-family: 'M PLUS Rounded 1c', sans-serif;
             font-size: 16px;
         }
@@ -58,7 +58,7 @@
             font-weight: bold;
         }
         
-        /* トースト通知 */
+        /* トースト通知（コピー完了などのアクション用） */
         #toast-container {
             position: fixed;
             bottom: 30px;
@@ -112,6 +112,10 @@
             <h1 class="text-xl font-bold text-[var(--theme-main)] flex items-center gap-2">
                 📩 MailCopy Helper <span class="text-xs text-gray-400 font-normal mt-1">Lite</span>
             </h1>
+            
+            <span id="header-save-msg" class="text-sm font-bold text-[var(--theme-main)] opacity-0 transition-opacity duration-700 select-none">
+                ✅ 保存完了
+            </span>
             </div>
         
         <div class="flex gap-2">
@@ -155,17 +159,28 @@
             <div class="bg-white/80 border-l-4 border-pink-400 p-4 rounded-r shadow-sm text-sm mb-2">
                 <div class="flex items-start gap-3">
                     <div class="text-2xl mt-0.5">🎁</div>
-                    <div>
+                    <div class="flex-1">
                         <p class="text-gray-700 leading-relaxed font-medium mb-2">
                             本エディタの完全版は、メルマガスタンド「7th-Mail」一般販売開始時に<span class="text-pink-500 font-bold">うりぽん特典</span>として配布予定です。<br>
                             販売時期のお知らせはレビューページまたはうりぽんメルマガにてご案内します。
                         </p>
-                        <div class="bg-pink-50/50 rounded-lg p-2 inline-block">
-                            <span class="font-bold text-gray-500 text-xs">レビューページはこちら（PR）</span>
-                            <a href="https://uri-enjoylife.com/7thmail" target="_blank" class="block text-pink-500 font-bold hover:underline hover:text-pink-600 text-base flex items-center gap-1">
-                                ＞＞ https://uri-enjoylife.com/7thmail <span class="text-xs">↗</span>
-                            </a>
+                        
+                        <div class="flex flex-wrap items-center gap-4">
+                            <div class="bg-pink-50/50 rounded-lg p-2 inline-block">
+                                <span class="font-bold text-gray-500 text-xs">レビューページ</span>
+                                <a href="https://uri-enjoylife.com/7thmail" target="_blank" class="block text-pink-500 font-bold hover:underline hover:text-pink-600 text-base flex items-center gap-1">
+                                    ＞＞ https://uri-enjoylife.com/7thmail <span class="text-xs">↗</span>
+                                </a>
+                            </div>
+
+                            <div class="flex items-center gap-1 mt-1 sm:mt-0">
+                                <span class="text-xs font-bold text-gray-400">📹</span>
+                                <a href="https://sharing.clickup.com/clip/p/t90181924724/7efeb5c2-0cd2-4ba5-9368-a1b8660cdf48/7efeb5c2-0cd2-4ba5-9368-a1b8660cdf48.webm?filename=screen-recording-2025-12-25-20:30.webm" target="_blank" class="text-blue-500 font-bold hover:underline decoration-blue-300 underline-offset-2">
+                                    使い方のリンクはこちら
+                                </a>
+                            </div>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -229,8 +244,8 @@
                 <button id="btn-copy" onclick="copyHtml()" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-8 rounded-full shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2 h-full">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
                     <div class="text-left leading-tight">
-                        <div class="text-xs font-normal opacity-90">ヘッダーフッター付き</div>
-                        <div class="text-base font-bold">HTMLコピー</div>
+                        <div class="text-xs font-normal opacity-90">HTML</div>
+                        <div class="text-base font-bold">コピー</div>
                     </div>
                 </button>
             </div>
@@ -588,7 +603,7 @@
             fSelect.value = currentF;
         }
 
-        // --- 10. 自動保存 ---
+        // --- 10. 自動保存（ヘッダーでさりげなく通知） ---
         async function autoSave() {
             const content = quill.root.innerHTML;
             const nowObj = new Date();
@@ -596,6 +611,8 @@
             const sortDate = nowObj.toISOString();
 
             if (deletePending) return;
+
+            let success = false;
 
             if(editMode === 'draft') {
                 const subject = document.getElementById('input-subject').value;
@@ -610,6 +627,7 @@
                     setEditorUI('draft', true); 
                 }
                 loadDraftList();
+                success = true;
             } else {
                 const name = document.getElementById('input-hf-name').value || '名称未設定';
                 const table = editMode === 'header' ? db.headers : db.footers;
@@ -623,6 +641,17 @@
                 }
                 loadSettingsList();
                 updateDropdowns();
+                success = true;
+            }
+
+            // ヘッダーでの保存完了通知
+            if(success) {
+                const msg = document.getElementById('header-save-msg');
+                msg.classList.remove('opacity-0');
+                if(window.headerSaveTimer) clearTimeout(window.headerSaveTimer);
+                window.headerSaveTimer = setTimeout(() => {
+                    msg.classList.add('opacity-0');
+                }, 2000);
             }
         }
 
@@ -656,7 +685,7 @@
             return { hContent, body, fContent };
         }
 
-        // HTMLコピー (名前変換機能削除)
+        // HTMLコピー
         async function copyHtml() {
             let { hContent, body, fContent } = await getCombinedContent();
             let finalHtml = `${hContent}\n${body}\n${fContent}`;
@@ -669,17 +698,12 @@
             }
         }
 
-        // テキストコピー (名前変換機能削除)
+        // テキストコピー
         async function copyTextOnly() {
             let { hContent, body, fContent } = await getCombinedContent();
-            
-            // 本文は Quill の getText() で取得 (改行が完璧)
             const textBody = quill.getText();
-            
-            // H/F は自作関数で改行込みのテキスト化
             const textHeader = stripHtml(hContent);
             const textFooter = stripHtml(fContent);
-            
             let finalString = `${textHeader}\n\n${textBody}\n\n${textFooter}`;
 
             try {

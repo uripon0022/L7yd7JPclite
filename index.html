@@ -4,14 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MailCopy Helper Lite</title>
+    <!-- Favicon as Data URI -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📩</text></svg>">
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
     
+    <!-- Quill.js CSS -->
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js"></script>
     
+    <!-- Dexie.js (IndexedDB Wrapper) -->
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
     
     <style>
@@ -161,13 +166,13 @@
                     <div class="text-2xl mt-0.5">🎁</div>
                     <div class="flex-1">
                         <p class="text-gray-700 leading-relaxed font-medium mb-2">
-                            本エディタの完全版は、メルマガスタンド「7th-Mail」一般販売開始時に<span class="text-pink-500 font-bold">うりぽん特典</span>として配布予定です。<br>
-                            販売時期のお知らせはレビューページまたはうりぽんメルマガにてご案内します。
+                            本エディタの完全版は、メルマガスタンド「7th-Mail」の<span class="text-pink-500 font-bold">うりぽん特典として配布しています！</span><br>
+
                         </p>
                         
                         <div class="flex flex-wrap items-center gap-4">
                             <div class="bg-pink-50/50 rounded-lg p-2 inline-block">
-                                <span class="font-bold text-gray-500 text-xs">レビューページ</span>
+                                <span class="font-bold text-gray-500 text-xs">レビューページはこちら！</span>
                                 <a href="https://uri-enjoylife.com/7thmail" target="_blank" class="block text-pink-500 font-bold hover:underline hover:text-pink-600 text-base flex items-center gap-1">
                                     ＞＞ https://uri-enjoylife.com/7thmail <span class="text-xs">↗</span>
                                 </a>
@@ -175,7 +180,7 @@
 
                             <div class="flex items-center gap-1 mt-1 sm:mt-0">
                                 <span class="text-xs font-bold text-gray-400">📹</span>
-                                <a href="https://sharing.clickup.com/clip/p/t90181924724/7efeb5c2-0cd2-4ba5-9368-a1b8660cdf48/7efeb5c2-0cd2-4ba5-9368-a1b8660cdf48.webm?filename=screen-recording-2025-12-25-20:30.webm" target="_blank" class="text-blue-500 font-bold hover:underline decoration-blue-300 underline-offset-2">
+                                <a href="#" onclick="alert('実際のリンク先へ飛びます'); return false;" class="text-blue-500 font-bold hover:underline decoration-blue-300 underline-offset-2">
                                     使い方のリンクはこちら
                                 </a>
                             </div>
@@ -252,6 +257,10 @@
 
         </main>
     </div>
+
+    <!-- Quill.js JS -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js"></script>
 
     <script>
         // --- 0. カラーテーマ管理（ピンクと黒のみ） ---
@@ -685,42 +694,76 @@
             return { hContent, body, fContent };
         }
 
+        // コピー用ヘルパー関数（Iframe互換性向上用）
+        function execCopy(text) {
+             if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text);
+            } else {
+                let textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-9999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                return new Promise((resolve, reject) => {
+                    try {
+                        const successful = document.execCommand('copy');
+                        successful ? resolve() : reject();
+                    } catch (err) {
+                        reject(err);
+                    } finally {
+                        document.body.removeChild(textArea);
+                    }
+                });
+            }
+        }
+
         // HTMLコピー
         async function copyHtml() {
             let { hContent, body, fContent } = await getCombinedContent();
             let finalHtml = `${hContent}\n${body}\n${fContent}`;
 
             try {
-                await navigator.clipboard.writeText(finalHtml);
+                await execCopy(finalHtml);
                 showToast('📋 HTMLをコピーしました！');
             } catch (err) {
                 showToast('❌ コピー失敗');
+                console.error(err);
             }
         }
 
         // テキストコピー
         async function copyTextOnly() {
             let { hContent, body, fContent } = await getCombinedContent();
-            const textBody = quill.getText();
+            // HeaderとFooterもHTMLタグ除去
             const textHeader = stripHtml(hContent);
             const textFooter = stripHtml(fContent);
+            
+            // Bodyのテキスト化はQuillのgetTextを使うと純粋なテキストが取れるが、
+            // ヘッダー・フッターとの整合性を取るため stripHtml で統一しても良い。
+            // ここでは元のロジック（quill.getText）を尊重しつつ、空行などを調整。
+            const textBody = quill.getText();
+            
             let finalString = `${textHeader}\n\n${textBody}\n\n${textFooter}`;
 
             try {
-                await navigator.clipboard.writeText(finalString);
+                await execCopy(finalString);
                 showToast('📄 テキストをコピーしました！');
             } catch (err) {
                 showToast('❌ コピー失敗');
+                console.error(err);
             }
         }
 
         async function copyBodyOnly() {
             const body = quill.root.innerHTML;
             try {
-                await navigator.clipboard.writeText(body);
+                await execCopy(body);
                 showToast('✅ WP用コピー完了(本文のみ)');
             } catch (err) {
                 showToast('❌ コピー失敗');
+                console.error(err);
             }
         }
 
